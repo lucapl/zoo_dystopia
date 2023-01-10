@@ -7,9 +7,7 @@ import ZooDystopia.GFX.BasicButton;
 import ZooDystopia.GFX.BasicPanel;
 import ZooDystopia.GFX.LimitableVisibility;
 import ZooDystopia.GFX.Sprites.BasicSprite;
-import ZooDystopia.GFX.Sprites.Clickable;
 import ZooDystopia.GFX.Sprites.ImageSprite;
-import ZooDystopia.Structures.Structure;
 import ZooDystopia.Utils.Controllers.EntityController;
 import ZooDystopia.Utils.Factories.PredatorFactory;
 import ZooDystopia.Utils.Factories.PreyFactory;
@@ -20,7 +18,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ControlPanel extends BasicPanel {
@@ -38,35 +35,28 @@ public class ControlPanel extends BasicPanel {
         super(width,height);
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         JLabel infoLabel = new JLabel("Select an object to view its information");
-        preyButtonPanel = new PreyButtonPanel();
-        preyButtonPanel.setVisible(false);
-        canBeLimited = new ArrayList<>();
+        setPreyButtonPanel(new PreyButtonPanel());
+        getPreyButtonPanel().setVisible(false);
+        setCanBeLimited(new ArrayList<>());
 
         add(infoLabel);
-        defineButtons();
+        initiateTheButtons();
         setInfoPanel(new InfoPanel(256,360));
         ImageSprite.setInfoPanel(getInfoPanel());
-        preyButtonPanel.setInfoPanelInterface(getInfoPanel());
-        preyButtonPanel.addButtonFunctionality();
-        add(addPredatorButton);
-        add(addPreyButton);
-        add(preyButtonPanel);
-        add(removeButton);
+        getPreyButtonPanel().setInfoPanelInterface(getInfoPanel());
+        getPreyButtonPanel().addButtonFunctionality();
+        add(getAddPredatorButton());
+        add(getAddPreyButton());
+        add(getPreyButtonPanel());
+        add(getRemoveButton());
         add(getInfoPanel());
-        scrollPane = new JScrollPane(getInfoPanel());
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setAlignmentX(LEFT_ALIGNMENT);
-        add(scrollPane);
+        setScrollPane(new JScrollPane(getInfoPanel()));
+        getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        getScrollPane().setAlignmentX(LEFT_ALIGNMENT);
+        add(getScrollPane());
         revalidate();
         repaint();
     }
-    public void addPreyButtonAction(ActionListener action){
-        addPreyButton.addActionListener(action);
-    }
-    public void addPredatorButtonAction(ActionListener action){
-        addPredatorButton.addActionListener(action);
-    }
-
     @Override
     public void paintComponent(Graphics g){
         super.paintComponent(g);
@@ -75,36 +65,42 @@ public class ControlPanel extends BasicPanel {
     @Override
     public Component add(Component comp){
         if (comp instanceof LimitableVisibility thing){
-            canBeLimited.add(thing);
+            getCanBeLimited().add(thing);
         }
         return super.add(comp);
     }
-    public void defineButtons(){
-        addPredatorButton = new BasicButton("Add predator") {
+
+    private void initiateTheButtons(){
+        setAddPredatorButton(new BasicButton("Add predator") {
             @Override
             public boolean shouldBeVisible(VisibilityFlag flag) {
                 return true;
             }
-        };
-        addPredatorButton.setVisible(false);
-        addPreyButton = new BasicButton("Add prey"){
+        });
+        getAddPredatorButton().setVisible(false);
+        setAddPreyButton(new BasicButton("Add prey"){
             @Override
             public boolean shouldBeVisible(VisibilityFlag flag) {
                 return flag == VisibilityFlag.STRUCTURE;
             }
-        };
-        addPreyButton.setVisible(false);
-        removeButton = new BasicButton("Remove"){
+        });
+        getAddPreyButton().setVisible(false);
+        setRemoveButton(new BasicButton("Remove"){
             @Override
             public boolean shouldBeVisible(VisibilityFlag flag) {
                 return flag == VisibilityFlag.PREY || flag == VisibilityFlag.ENTITY;
             }
-        };
-        removeButton.setVisible(false);
+        });
+        getRemoveButton().setVisible(false);
 
     }
+
+    /**
+     * Add functionality to the buttons
+     * @param world in respect to which the buttons will be defined
+     */
     public void addButtonFunctionality(World world){
-        addPredatorButton.addActionListener(new ActionListener() {
+        getAddPredatorButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 EntityController predatorController = new EntityController(new PredatorFactory());
@@ -113,7 +109,7 @@ public class ControlPanel extends BasicPanel {
 
         });
 
-        addPreyButton.addActionListener(new ActionListener() {
+        getAddPreyButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 EntityController preyController = new EntityController(new PreyFactory());
@@ -122,7 +118,7 @@ public class ControlPanel extends BasicPanel {
 
         });
 
-        removeButton.addActionListener(new ActionListener() {
+        getRemoveButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Entity removedEntity = (Entity) getSelectedSprite().getRepresentedObject();
@@ -135,16 +131,16 @@ public class ControlPanel extends BasicPanel {
         });
     }
 
-    public void recheckVisibilities(){
+    private void recheckVisibilities(){
         VisibilityFlag flag = null;
         if(getInfoPanel() !=null ) {
             flag = getInfoPanel().getVisibilityFlag();
         }
-        for(var thing : canBeLimited) {
+        for(var thing : getCanBeLimited()) {
             setComponentVisibility(thing,flag);
         }
     }
-    public void setComponentVisibility(LimitableVisibility thing,VisibilityFlag flag){
+    private void setComponentVisibility(LimitableVisibility thing,VisibilityFlag flag){
         thing.setVisible(thing.shouldBeVisible(flag));
     }
     public BasicSprite getSelectedSprite(){
@@ -157,5 +153,61 @@ public class ControlPanel extends BasicPanel {
 
     public void setInfoPanel(InfoPanel infoPanel) {
         this.infoPanel = infoPanel;
+    }
+
+    public JLabel getInfoLabel() {
+        return infoLabel;
+    }
+
+    public void setInfoLabel(JLabel infoLabel) {
+        this.infoLabel = infoLabel;
+    }
+
+    public BasicButton getAddPredatorButton() {
+        return addPredatorButton;
+    }
+
+    public void setAddPredatorButton(BasicButton addPredatorButton) {
+        this.addPredatorButton = addPredatorButton;
+    }
+
+    public BasicButton getAddPreyButton() {
+        return addPreyButton;
+    }
+
+    public void setAddPreyButton(BasicButton addPreyButton) {
+        this.addPreyButton = addPreyButton;
+    }
+
+    public BasicButton getRemoveButton() {
+        return removeButton;
+    }
+
+    public void setRemoveButton(BasicButton removeButton) {
+        this.removeButton = removeButton;
+    }
+
+    public PreyButtonPanel getPreyButtonPanel() {
+        return preyButtonPanel;
+    }
+
+    public void setPreyButtonPanel(PreyButtonPanel preyButtonPanel) {
+        this.preyButtonPanel = preyButtonPanel;
+    }
+
+    public JScrollPane getScrollPane() {
+        return scrollPane;
+    }
+
+    public void setScrollPane(JScrollPane scrollPane) {
+        this.scrollPane = scrollPane;
+    }
+
+    public List<LimitableVisibility> getCanBeLimited() {
+        return canBeLimited;
+    }
+
+    public void setCanBeLimited(List<LimitableVisibility> canBeLimited) {
+        this.canBeLimited = canBeLimited;
     }
 }

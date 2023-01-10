@@ -9,6 +9,7 @@ import java.util.Random;
 
 public class WaterSourceFactory extends FoodSourceFactory{
     public WaterSourceFactory(){
+        super();
         List<String> waterSourceNames = new LinkedList<>();
         waterSourceNames.add("Żywiec zdrój");
         waterSourceNames.add("Kropla bezkitu");
@@ -18,12 +19,16 @@ public class WaterSourceFactory extends FoodSourceFactory{
         waterSourceNames.add("Primavera");
         waterSourceNames.add("Harnaś");
         waterSourceNames.add("Jurajska");
+        waterSourceNames.add("Woda");
+        waterSourceNames.add("Jezioro");
+        waterSourceNames.add("Halne mocne");
         setNames(waterSourceNames);
+        setMaximumReplenishment(4);
     }
 
     @Override
     public Object create() {
         Randomizer<String> randomizer = new Randomizer<>();
-        return new WaterSource(randomizer.getRandomFrom(getNames()),1,2);
+        return new WaterSource(randomizer.getRandomFrom(getNames()),getCapacity(),getReplenishment());
     }
 }

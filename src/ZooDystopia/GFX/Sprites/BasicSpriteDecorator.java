@@ -1,5 +1,7 @@
 package ZooDystopia.GFX.Sprites;
 
+import ZooDystopia.GFX.Drawing.Drawing;
+
 import java.awt.*;
 
 public class BasicSpriteDecorator extends BasicSprite{
@@ -9,9 +11,14 @@ public class BasicSpriteDecorator extends BasicSprite{
         super(null);
         this.setWrappedSprite(wrappedSprite);
     }
+    public BasicSpriteDecorator(BasicSprite wrappedSprite, Drawing drawing){
+        super(drawing);
+        this.setWrappedSprite(wrappedSprite);
+    }
     @Override
     public void paintComponent(Graphics g){
         getWrappedSprite().paintComponent(g);
+        super.paintComponent(g);
     }
 
     public BasicSprite getWrappedSprite() {

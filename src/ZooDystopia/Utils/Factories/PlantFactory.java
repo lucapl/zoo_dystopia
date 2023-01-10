@@ -12,13 +12,17 @@ public class PlantFactory extends FoodSourceFactory{
         List<String> plantNames = new LinkedList<>();
         plantNames.add("Marihuana");
         plantNames.add("Krzak");
-        plantNames.add("Coś");
+        plantNames.add("Zioło");
+        plantNames.add("Chwast");
+        plantNames.add("Palma");
+        plantNames.add("Borówki");
         setNames(plantNames);
+        setMaximumReplenishment(3);
     }
 
     @Override
     public Object create() {
         Randomizer<String> randomizer = new Randomizer<>();
-        return new Plant(randomizer.getRandomFrom(getNames()),1,1);
+        return new Plant(randomizer.getRandomFrom(getNames()),getCapacity(),getReplenishment());
     }
 }

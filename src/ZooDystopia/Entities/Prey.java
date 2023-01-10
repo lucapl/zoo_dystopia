@@ -4,6 +4,7 @@ import ZooDystopia.Consumable;
 import ZooDystopia.Pathing.Path;
 import ZooDystopia.Pathing.Route;
 import ZooDystopia.Structures.*;
+import ZooDystopia.Utils.Controllers.EntityController;
 import ZooDystopia.Utils.Filter;
 import ZooDystopia.Utils.Meter;
 import ZooDystopia.Utils.Randomizer;
@@ -21,12 +22,14 @@ public class Prey extends RunnableEntity {
     private boolean attacked;
 
     private boolean consuming;
-    private Route goesTo;
-    private boolean waiting = false;
+    private volatile Route goesTo;
 
-    private Structure currentStructure;
+    private volatile Structure currentStructure;
 
-    private static float structureEntryRange = 50;
+    private boolean parent = false;
+    private boolean baby = false;
+
+    private final static float structureEntryRange = 50;
 
     public Meter getThirst() {
         return thirst;
@@ -38,59 +41,19 @@ public class Prey extends RunnableEntity {
     }
 
 
+
     public Prey(String name,String species,float strength,float speed){
         super(name, species, strength, speed);
-        thirst = new Meter("Thirst",0,50,30,0.3f);
-        hunger = new Meter("Hunger",0,50,20,0.2f);
+        setThirst(new Meter("Thirst",0,50,30,0.3f));
+        setHunger(new Meter("Hunger",0,50,20,0.2f));
         setSleepiness(new Meter("Sleepiness", 0, 100, 80, 0.1f));
-    }
-    /**
-     * Proceed to hide at a hideout
-     * @param hideout place to hide at
-     */
-    public void hideAt(Hideout hideout){
-        return;
-    }
 
-    public boolean isInThreadEntryRange(Structure structure){
-        return lengthTo(structure) < structureEntryRange;
     }
-
-    public String toString(){
-        return "Prey\n"+super.toString() + "\nGoes to: "+ getGoesTo() + "\nIsAtStructure? " + isAtStructure()+ "\n"+ getThirst()+"\n"+getHunger();// + "\n" + getSleepiness() + "Hidden?: " + isHidden();
-    }
-    /**
-     * Make a baby with a partner
-     * @param partner to mix genes with
-     * @return the baby
-     */
-    public Prey reproduceWith(Prey partner){
-        Random random = new Random();
-        float babyStrength = random.nextFloat(-1,1)+(getStrength() + partner.getStrength())/2;
-        float babySpeed = random.nextFloat(-0.25f,0.25f)+(getSpeed() + partner.getSpeed())/2;
-        Randomizer randomizer = new Randomizer<>();
-        String babyName = randomizer.mixStrings(getName(),partner.getName());
-        String babySpecies = randomizer.mixStrings(getSpecies(),partner.getSpecies());
-        Prey baby = new Prey(babyName,babySpecies,babyStrength ,babySpeed);
-
-        return baby;
-    }
-    public void getAttacked(float dif){
-        getHealth().update(-Math.max(dif, 0));
-        setAttacked(true);
-        finishStuff();
-        getSleepiness().update(999);
-        if(!isAlive()){
-            setDeathReason("Killed by a predator");
-        }
-    }
-
     @Override
     public void run(){
         Random random = new Random();
-        if(random.nextFloat() < 0.0001f){
+        if(random.nextFloat(0,1) < 0.01f){
             getHealth().setValue(-999);
-            die();
             setDeathReason("Brain eating amoeba");
         }
         pickClosest();
@@ -109,11 +72,52 @@ public class Prey extends RunnableEntity {
             getSleepiness().update();
             checkNeeds();
         }
+        leave();
         if(!isRemoved()) {
             die();
         }
     }
-    public void checkNeeds(){
+    private boolean isInThreadEntryRange(Structure structure){
+        return lengthTo(structure) < structureEntryRange;
+    }
+
+    public String toString(){
+        return "Prey\n"+super.toString() + "\nGoes to: "+ getGoesTo() + "\nIsAtStructure? " + isAtStructure()+ "\n"+ getThirst()+"\n"+getHunger();// + "\n" + getSleepiness() + "Hidden?: " + isHidden();
+    }
+    /**
+     * Make a baby with a partner
+     * @param partner to mix genes with
+     * @return the baby
+     */
+    public Prey reproduceWith(Prey partner){
+        setParent(true);
+        partner.setBaby(true);
+        getSleepiness().update(50);
+        Random random = new Random();
+        float babyStrength = random.nextFloat(-1,1)+(getStrength() + partner.getStrength())/2;
+        float babySpeed = random.nextFloat(-0.25f,0.25f)+(getSpeed() + partner.getSpeed())/2;
+        Randomizer randomizer = new Randomizer<>();
+        String babyName = randomizer.mixStrings(getName(),partner.getName());
+        String babySpecies = randomizer.mixStrings(getSpecies(),partner.getSpecies());
+        Prey baby = new Prey(babyName,babySpecies,babyStrength ,babySpeed);
+        baby.setBaby(true);
+        baby.getSleepiness().setToMax();
+
+        return baby;
+    }
+
+    /**
+     * Take damage from some source
+     * @param dif the damage, most likely the difference in strengths
+     */
+    public void getAttacked(float dif){
+        getHealth().update(-Math.max(dif, 0));
+        setAttacked(true);
+        //finishStuff();
+        getSleepiness().update(999);
+    }
+
+    private void checkNeeds(){
         if(isThirsty()){
             getHealth().update(-0.05f);
         }
@@ -121,6 +125,10 @@ public class Prey extends RunnableEntity {
             getHealth().update(-0.1f);
         }
     }
+
+    /**
+     * Determine, based on the needs where should the prey go
+     */
     public void setDesiredRoute(){
         if(isForcedToGo()){
             return;
@@ -136,49 +144,77 @@ public class Prey extends RunnableEntity {
             setGoesTo(Route.ToHideout);
         }
     }
+
+    /**
+     * Do stuff at a place of interest
+     * @param routable place of interest
+     */
     public void doStuffAt(Routable routable){
         setWalking(false);
-        interpolateEntry(currentStructure);
+        interpolateEntry(getCurrentStructure());
         switch(routable.getRoute()){
             case ToPlants, ToWaterSource -> consume((Consumable) routable);
             case ToHideout -> hide((Hideout)routable);
         }
     }
+
+    /**
+     * Things to change when finishing action at a place of interest
+     */
     public void finishStuff(){
         setWalking(true);
         setConsuming(false);
         setHidden(false);
         setForcedToGo(false);
     }
+
+    /**
+     * defines the walk behaviour
+     */
     public void walk(){
         if(isWalking()) {
             setDesiredRoute();
             updateVelocity();
-            if (isAtStructure() && isAtDestination()) {
-                interpolateLeave();
-            }
             if(isInThreadEntryRange((Structure) getDestination()) && !isAtStructure()){
                 enter((Structure) getDestination());
-            }
-            if(isAtStructure()&&!isInThreadEntryRange(currentStructure)){
-                leave();
             }
             if (isAtDestination()) {
                 interpolateEntry((Structure) getDestination());
             }
+            if (isAtStructure() && isAtDestination()) {
+                interpolateLeave();
+            }
+            if(isAtStructure()&&!isInThreadEntryRange(getCurrentStructure())){
+                leave();
+            }
+
         }
     }
 
+    /**
+     * Proceed to hide at a hideout
+     * @param hideout place to hide at
+     */
     public void hide(Hideout hideout){
         setHidden(true);
         setAttacked(false);
-        Randomizer<Prey> rand = new Randomizer<>();
-        Filter<Entity,Prey> preyFilter = new Filter<>(Prey.class);
-        Prey partner = rand.getRandomFrom(preyFilter.filter(hideout.getEntitiesAt()));
-        reproduceWith(partner);
+        if(canHaveAChild()) {
+            Randomizer<Prey> rand = new Randomizer<>();
+            Filter<Entity, Prey> preyFilter = new Filter<>(Prey.class);
+            Prey partner;
+            synchronized (hideout.getEntitiesAt()) {
+                partner = rand.getRandomFrom(preyFilter.filter(hideout.getEntitiesAt()).stream().filter(Prey::canHaveAChild).toList());
+            }
+            if (partner != null && partner != this) {
+                EntityController entityController = new EntityController(null);
+                entityController.addAt(reproduceWith(partner), getCurrentStructure(), getWorld());
+            }
+        }
         getSleepiness().update(-2f);
         if(getSleepiness().isEmpty()){
             finishStuff();
+            setParent(false);
+            setBaby(false);
         }
     }
 
@@ -186,10 +222,10 @@ public class Prey extends RunnableEntity {
         if(getGoesTo() == null){
             stroll();
         }
-        Structure destination = (Structure)getDestination();
-        List<Path> paths = destination.getPaths();
+        Structure structure = getCurrentStructure();
+        List<Path> paths = structure.getPaths();
         for(Path path : paths){
-            Structure otherEnd = path.getTheOtherEnd(destination);
+            Structure otherEnd = path.getTheOtherEnd(structure);
             if(path.doesLeadTo(otherEnd,getGoesTo())){
                 setDestination(otherEnd);
             }
@@ -205,7 +241,7 @@ public class Prey extends RunnableEntity {
         setDestination(otherEnd);
     }
     public void pickClosest(){
-        List<Structure> structures = getMap().getStructures();
+        List<Structure> structures = getWorld().getStructures();
         setDestination(structures.stream()
                 .min((struct1,struct2)->(Float.compare(struct1.lengthTo(this),struct2.lengthTo(this))))
                 .get());
@@ -247,14 +283,6 @@ public class Prey extends RunnableEntity {
         return isHungry() || isThirsty();
     }
 
-    public boolean isWaiting() {
-        return waiting;
-    }
-
-    public void setWaiting(boolean waiting) {
-        this.waiting = waiting;
-    }
-
     public void consume(Consumable consumable){
         setConsuming(true);
         super.consume(consumable);
@@ -279,7 +307,7 @@ public class Prey extends RunnableEntity {
     }
 
     public boolean isAtStructure() {
-        return currentStructure != null;
+        return getCurrentStructure() != null;
     }
 
     public void interpolateEntry(Structure structure){
@@ -287,6 +315,7 @@ public class Prey extends RunnableEntity {
         setVelocity(0,0);
     }
     public void enter(Structure structure){
+        leave();
         try {
             structure.getSemaphore().acquire();
             setCurrentStructure(structure);
@@ -294,6 +323,7 @@ public class Prey extends RunnableEntity {
         }catch (InterruptedException e){
             e.printStackTrace();
             System.err.println("Thread interrupted");
+            leave();
             structure.getSemaphore().release();
         }
     }
@@ -302,9 +332,17 @@ public class Prey extends RunnableEntity {
         pickDestination();
     }
     public void leave(){
-        getCurrentStructure().getSemaphore().release();
-        getCurrentStructure().remove(this);
-        setCurrentStructure(null);
+        if(getCurrentStructure()!=null) {
+            getCurrentStructure().remove(this);
+            getCurrentStructure().getSemaphore().release();
+            setCurrentStructure(null);
+        }
+    }
+
+    @Override
+    public void die(){
+        leave();
+        super.die();
     }
 
     public boolean isAttacked() {
@@ -315,11 +353,11 @@ public class Prey extends RunnableEntity {
         this.attacked = attacked;
     }
 
-    public Structure getCurrentStructure() {
+    public synchronized Structure getCurrentStructure() {
         return currentStructure;
     }
 
-    public void setCurrentStructure(Structure currentStructure) {
+    public synchronized void setCurrentStructure(Structure currentStructure) {
         this.currentStructure = currentStructure;
     }
 
@@ -345,5 +383,33 @@ public class Prey extends RunnableEntity {
 
     public void setSleepiness(Meter sleepiness) {
         this.sleepiness = sleepiness;
+    }
+
+    public boolean isParent() {
+        return parent;
+    }
+
+    public void setParent(boolean madeABaby) {
+        this.parent = madeABaby;
+    }
+
+    public void setThirst(Meter thirst) {
+        this.thirst = thirst;
+    }
+
+    public void setHunger(Meter hunger) {
+        this.hunger = hunger;
+    }
+
+    public boolean isBaby() {
+        return baby;
+    }
+
+    public void setBaby(boolean baby) {
+        this.baby = baby;
+    }
+
+    public boolean canHaveAChild(){
+        return !isParent() && !isBaby();
     }
 }

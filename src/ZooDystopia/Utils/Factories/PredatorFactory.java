@@ -26,9 +26,14 @@ public class PredatorFactory extends EntityFactory{
         species.add("Lis");
         species.add("Tygrys");
         setSpecies(species);
+
+        setMaxSpeed(25);
+        setMinSpeed(15);
+        setMaxStrength(15);
+        setMinStrength(7);
     }
     public Object create(){
         Randomizer<String> rand = new Randomizer<>();
-        return new Predator(rand.getRandomFrom(getNames()),rand.getRandomFrom(getSpecies()),15,20);
+        return new Predator(rand.getRandomFrom(getNames()),rand.getRandomFrom(getSpecies()),getStrength(),getSpeed());
     }
 }

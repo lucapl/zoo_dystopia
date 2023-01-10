@@ -26,7 +26,9 @@ public class BasicSprite extends JComponent implements Clickable,Boundable{
     @Override
     public void paintComponent(Graphics g){
         super.paintComponent(g);
-        getDrawing().draw(g);
+        if(getDrawing() != null) {
+            getDrawing().draw(g);
+        }
         if(isDEBUGRECT()) {
             Graphics2D g2d = (Graphics2D) g;
             g2d.setStroke(new BasicStroke(1));

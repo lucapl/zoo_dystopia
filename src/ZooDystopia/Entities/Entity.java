@@ -7,6 +7,7 @@ public class Entity extends CartesianObject {
     private String name;
     private String species;
     private String deathReason;
+
     public Entity(String name,String species, float strength){
         this.setName(name);
         this.setSpecies(species);

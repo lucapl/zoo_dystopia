@@ -10,7 +10,6 @@ import java.util.Random;
 
 public abstract class RunnableEntity extends Entity implements Runnable{
     private Meter health;
-    private boolean alive;
     private float speed;
     private volatile Vector2D velocity;
     private volatile CartesianObject destination;
@@ -34,14 +33,13 @@ public abstract class RunnableEntity extends Entity implements Runnable{
         super(name,species,strength);
         float health = 100;
         setHealth(new Meter("Health",health,health,0,0));
-        setAlive(true);
         setSpeed(speed);
         setVelocity(new Vector2D());
         //setDestination(new CartesianObject());
 
     }
 
-    public static World getMap() {
+    public static World getWorld() {
         return world;
     }
 
@@ -60,6 +58,9 @@ public abstract class RunnableEntity extends Entity implements Runnable{
         return;//calling stop is not thread safe according to the documentation and instead the run method should invoke return
     }
     public void stroll(){
+        if(getVelocity().isZero()){
+            setVelocityToNormal();
+        }
         Random random = new Random();
         float theta = random.nextFloat((float)Math.PI/3) - (float)Math.PI/6;
         //setVelocityToNormal();
@@ -95,7 +96,7 @@ public abstract class RunnableEntity extends Entity implements Runnable{
         CartesianObject newPos = new CartesianObject();
         newPos.set(this);
         newPos.add(getVelocity());
-        getMap().velocityOutOfBounds(newPos,getVelocity());
+        getWorld().velocityOutOfBounds(newPos,getVelocity());
         add(getVelocity());
     }
     public void updateVelocity(){
@@ -124,15 +125,7 @@ public abstract class RunnableEntity extends Entity implements Runnable{
 //    }
     @Override
     public String toString(){
-        return super.toString()+"\n"+ getHealth() +"\nisAlive: "+ isAlive() +"\nSpeed: "+ getSpeed() +"\nStrength: "+ getStrength()+"\nVelocity"+getVelocity()+"\nDestination: "+getDestination();
-    }
-
-    /**
-     * Proceeds to go to the specified coordinates
-     * @param point coordinates of destination
-     */
-    public void goTo(CartesianObject point){
-        return;
+        return super.toString()+"\n"+ getHealth() +"\nisAlive: "+ isAlive() +"\nSpeed: "+ getSpeed() +"\nStrength: "+ getStrength()+"\nVelocity"+getVelocity();//+"\nDestination: "+getDestination();
     }
 
     public synchronized void setHealth(Meter meter){
@@ -182,10 +175,6 @@ public abstract class RunnableEntity extends Entity implements Runnable{
         return !getHealth().ifIs();
     }
 
-    public void setAlive(boolean alive) {
-        this.alive = alive;
-    }
-
     public synchronized Meter getHealth() {
         return health;
     }
@@ -215,5 +204,9 @@ public abstract class RunnableEntity extends Entity implements Runnable{
 
     public void setRemoved(boolean removed) {
         this.removed = removed;
+    }
+
+    public boolean hasADeathReason(){
+        return !isAlive() && getDeathReason() == null;
     }
 }

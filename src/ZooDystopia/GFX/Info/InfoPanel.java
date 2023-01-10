@@ -60,6 +60,10 @@ public class InfoPanel extends BasicPanel implements InfoPanelInterface {
 //
 //        displayInfo(justSprite);
 //    }
+
+    /**
+     * Displays the info about selected sprite
+     */
     public void displayInfo(){
         if(getSelectedSprite() != null) {
             displayInfo(getSelectedSprite());
@@ -69,7 +73,6 @@ public class InfoPanel extends BasicPanel implements InfoPanelInterface {
             repaint();
         }
     }
-
     public void setSelectedSprite(BasicSprite s){
         this.selectedSprite = s;
         if(s == null){

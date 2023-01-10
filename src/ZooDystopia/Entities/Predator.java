@@ -1,18 +1,20 @@
 package ZooDystopia.Entities;
 
-import ZooDystopia.Utils.Randomizer;
+import ZooDystopia.Consumable;
+import ZooDystopia.Utils.Meter;
 
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 public class Predator extends RunnableEntity {
 
     private static float attackRange = 20;
     private PredatorModes mode;//use with PredatorModes
 
+    private Meter HuntingSatisfaction;
+
     public static List<Prey> getPrey() {
-        return getMap().getPrey();
+        return getWorld().getPrey();
     }
 
 //    public static List<Corpse> getCorpses() {
@@ -35,8 +37,13 @@ public class Predator extends RunnableEntity {
 
     public Predator(String name,String species,float strength,float speed){
         super(name, species, strength, speed);
+        setHuntingSatisfaction(new Meter("",0,100,50,0));
         setMode(defaultMode);
     }
+    public boolean isSatisfied(){
+        return getHuntingSatisfaction().isFull();
+    }
+
     /**
      * Switches modes between relaxation and hunting
      */
@@ -59,8 +66,10 @@ public class Predator extends RunnableEntity {
     public boolean kill(Prey prey){
         float strengthDifference = getStrength() - prey.getStrength();
         getHealth().update(strengthDifference);
+        getHuntingSatisfaction().update(strengthDifference);
         prey.getAttacked(strengthDifference);
-        sleep();
+        setVelocity(0,0);
+
         return !prey.isAlive();
     }
     public boolean isInAttackRange(Entity entity){
@@ -103,44 +112,59 @@ public class Predator extends RunnableEntity {
         }
 
         updateVelocity();
-        boolean eaten = false;
         if(getDestination() instanceof Corpse corpse && !corpse.isEaten()){
             if(isInAttackRange(corpse)){
                 consume(corpse);
-                eaten = corpse.isEaten();
             }
-        } else if(getDestination() instanceof Prey prey && !prey.isHidden()){
+        } else if(getDestination() instanceof Prey prey && !prey.isHidden() && prey.isAlive()){
             if(isInAttackRange(prey)){
                 kill(prey);
             }
 
         }else {
-            pickDestination();
-        }
-        if(eaten){
             setDestination(null);
+        }
+        if(isSatisfied()){
+            setDestination(null);
+            getHuntingSatisfaction().setValue(0);
             switchModes();
         }
     }
+
+    @Override
+    public void consume(Consumable consumable){
+        getHuntingSatisfaction().update(consumable.getFoodValue());
+        super.consume(consumable);
+    }
     public boolean pickDestination(){
-        List<Corpse> notEatenCorpses = getCorpses().stream().filter((corpse)->(!corpse.isEaten())).toList();
-        if(!notEatenCorpses.isEmpty()){
-            //Randomizer<Corpse> corpseRandomizer = new Randomizer<>();
-            Corpse closestCorpse = notEatenCorpses.stream().min((corpse1,corpse2)->(Float.compare(corpse1.lengthTo(this),corpse2.lengthTo(this)))).get();
-            setDestination(closestCorpse);
-            return true;
-        }
-        //Randomizer<Prey> preyRandomizer = new Randomizer<>();
-        List<Prey> notHiddenPrey = getPrey().stream().filter((Prey prey)->(!prey.isHidden())).toList();
-        if(!notHiddenPrey.isEmpty()) {
-            Prey closestPrey = notHiddenPrey.stream().min((prey1, prey2) -> (Float.compare(prey1.lengthTo(this), prey2.lengthTo(this)))).get();
-            setDestination(closestPrey);
-            return true;
+        synchronized (getWorld().getEntities()) {
+            List<Corpse> notEatenCorpses = getCorpses().stream().filter((corpse) -> (!corpse.isEaten())).toList();
+            if (!notEatenCorpses.isEmpty()) {
+                //Randomizer<Corpse> corpseRandomizer = new Randomizer<>();
+                Corpse closestCorpse = notEatenCorpses.stream().min((corpse1, corpse2) -> (Float.compare(corpse1.lengthTo(this), corpse2.lengthTo(this)))).get();
+                setDestination(closestCorpse);
+                return true;
+            }
+            //Randomizer<Prey> preyRandomizer = new Randomizer<>();
+            List<Prey> notHiddenPrey = getPrey().stream().filter((Prey prey) -> (!prey.isHidden())).toList();
+            if (!notHiddenPrey.isEmpty()) {
+                Prey closestPrey = notHiddenPrey.stream().min((prey1, prey2) -> (Float.compare(prey1.lengthTo(this), prey2.lengthTo(this)))).get();
+                setDestination(closestPrey);
+                return true;
+            }
         }
         return false;
     }
 
     private List<Corpse> getCorpses() {
-        return getMap().getCorpses();
+        return getWorld().getCorpses();
+    }
+
+    public Meter getHuntingSatisfaction() {
+        return HuntingSatisfaction;
+    }
+
+    public void setHuntingSatisfaction(Meter huntingSatisfaction) {
+        HuntingSatisfaction = huntingSatisfaction;
     }
 }

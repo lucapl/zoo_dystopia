@@ -23,9 +23,13 @@ public class PreyFactory extends EntityFactory{
         species.add("Baranek");
         species.add("Koza");
         setSpecies(species);
+        setMaxSpeed(15);
+        setMinSpeed(5);
+        setMaxStrength(10);
+        setMinStrength(5);
     }
     public Object create(){
         Randomizer<String> rand = new Randomizer<>();
-        return new Prey(rand.getRandomFrom(getNames()),rand.getRandomFrom(getSpecies()),10,10);
+        return new Prey(rand.getRandomFrom(getNames()),rand.getRandomFrom(getSpecies()),getStrength(),getSpeed());
     }
 }

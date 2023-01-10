@@ -74,4 +74,12 @@ public class Vector2D extends CartesianObject{
     public void flipX(){
         setX(-getX());
     }
+
+    /**
+     * Asks if the vector is a zero vector
+     * @return if X and Y are both 0
+     */
+    public boolean isZero(){
+        return getX()==0 && getY()==0;
+    }
 }

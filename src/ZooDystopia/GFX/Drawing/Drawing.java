@@ -2,24 +2,32 @@ package ZooDystopia.GFX.Drawing;
 
 import java.awt.*;
 
+/**
+ * Used for drawing inside a component
+ */
 public abstract class Drawing {
-    private Drawing anotherDrawing;
+    private Drawing wrappedDrawing;
 
-    public Drawing(Drawing anotherDrawing){
-        this.setAnotherDrawing(anotherDrawing);
+    public Drawing(Drawing wrappedDrawing){
+        this.setWrappedDrawing(wrappedDrawing);
     }
+
+    /**
+     * Defines how the drawing is drawn
+     * @param g
+     */
     public void draw(Graphics g){
-        if(getAnotherDrawing() !=null){
-            getAnotherDrawing().draw(g);
+        if(getWrappedDrawing() !=null){
+            getWrappedDrawing().draw(g);
         }
     }
     public abstract Dimension getDrawingDimension();
 
-    public Drawing getAnotherDrawing() {
-        return anotherDrawing;
+    public Drawing getWrappedDrawing() {
+        return wrappedDrawing;
     }
 
-    public void setAnotherDrawing(Drawing anotherDrawing) {
-        this.anotherDrawing = anotherDrawing;
+    public void setWrappedDrawing(Drawing wrappedDrawing) {
+        this.wrappedDrawing = wrappedDrawing;
     }
 }

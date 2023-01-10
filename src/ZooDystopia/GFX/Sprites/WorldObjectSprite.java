@@ -11,7 +11,6 @@
 //
 //    public WorldObjectSprite(BasicSprite wrappedSprite, CartesianObject coords){
 //        super(wrappedSprite);
-//        this.spriteSheet = spriteSheet;
 //        this.coords = coords;
 //        setPreferredSize(new Dimension(getSpriteSheet().getWidth(),getSpriteSheet().getHeight()));
 //        setSize(getSpriteSheet().getWidth(),getSpriteSheet().getHeight());
@@ -19,11 +18,12 @@
 //        setVisible(true);
 //    }
 //
-//    public SpriteSheet getSpriteSheet() {
-//        return spriteSheet;
+//    public CartesianObject getCartesianObject(){
+//        return cartesianObject;
 //    }
-//    public CartesianObject getCoords(){
-//        return coords;
+//
+//    public void setCartesianObject(CartesianObject cO){
+//        this.cartesianObject = cO;
 //    }
 //
 //    @Override

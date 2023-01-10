@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.image.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public class Visualizer {
         intersectionImage = loadImage("intersection.png");
         entitySpriteDimension = new Dimension(128,64);
         structureSpriteDimension = new Dimension(128,128);
-        setAssignedSprite(new HashMap<>());
+        setAssignedSprite(Collections.synchronizedMap(new HashMap<>()));
     }
 
     /**

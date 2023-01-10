@@ -18,9 +18,12 @@ public class Filter<Thing,Subthing extends Thing> {
 //    }
 
     public List<Subthing> filter(List<Thing> things){
+        if(things.isEmpty()){
+            return null;
+        }
         return things.stream()
                 .filter(clazz::isInstance)
                 .map(clazz::cast)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

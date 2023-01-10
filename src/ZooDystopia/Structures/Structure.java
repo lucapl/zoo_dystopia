@@ -5,6 +5,7 @@ import ZooDystopia.Entities.Entity;
 import ZooDystopia.Pathing.Path;
 import ZooDystopia.Pathing.Route;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Vector;
 import java.util.concurrent.Semaphore;
@@ -13,25 +14,31 @@ import java.util.List;
 public abstract class Structure extends CartesianObject {
     private int capacity;
     private List<Path> paths;
-    private List<Entity> entitiesAt;
-    private Semaphore semaphore;
+    private volatile List<Entity> entitiesAt;
+    private volatile Semaphore semaphore;
 
     public Structure(int cap){
         setCapacity(cap);
         setPaths(new LinkedList<>());
-        setEntitiesAt(new Vector<>(cap));
+        setEntitiesAt(Collections.synchronizedList(new Vector<>(cap)));
         setSemaphore(new Semaphore(cap));
     }
     public String toString(){
-        return "Structure\n" + "Capacity: " + getEntitiesAt().size() +"/" + getCapacity();//\n" + super.toString() + "\n" + getPaths();
+        return "Structure\n" + "Capacity: " + getEntitiesAt().size() +"/" + getCapacity()+"\n"+getEntitiesAt()  ;//\n" + super.toString() + "\n" + getPaths();
     }
     public void add(Path path){
         getPaths().add(path);
     }
-    public void add(Entity entity){
-        getEntitiesAt().add(entity);
+    public synchronized void add(Entity entity) throws InterruptedException{
+        synchronized (getEntitiesAt()) {
+            getEntitiesAt().add(entity);
+        }
     }
-    public void remove(Entity entity){ getEntitiesAt().remove(entity);}
+    public synchronized void remove(Entity entity){
+        synchronized (getEntitiesAt()) {
+            getEntitiesAt().remove(entity);
+        }
+    }
 
     public int getCapacity() {
         return capacity;
@@ -80,11 +87,11 @@ public abstract class Structure extends CartesianObject {
         this.entitiesAt = entitiesAt;
     }
 
-    public Semaphore getSemaphore() {
+    public synchronized Semaphore getSemaphore() {
         return semaphore;
     }
 
-    public void setSemaphore(Semaphore semaphore) {
+    public synchronized void setSemaphore(Semaphore semaphore) {
         this.semaphore = semaphore;
     }
 

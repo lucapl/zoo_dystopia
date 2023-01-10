@@ -19,7 +19,7 @@ import ZooDystopia.Utils.Randomizer;
 import java.util.*;
 
 public class World {
-    private List<Entity> entities;
+    private volatile List<Entity> entities;
     private List<Structure> structures;
     private List<Path> paths;
     private final int WIDTH;
@@ -31,9 +31,9 @@ public class World {
     public World(int width, int height, int sectionCount, Visualizer visualizer, WorldPanel jPanel){
         WIDTH = width;
         HEIGHT = height;
-        setEntities(new Vector<Entity>());
-        setStructures(new LinkedList<Structure>());
-        setPaths(new LinkedList<Path>());
+        setEntities(Collections.synchronizedList(new ArrayList<>()));
+        setStructures(new ArrayList<>());
+        setPaths(new ArrayList<>());
         setMapSections(new WorldSections(sectionCount));
         setMapPanel(jPanel);
         this.setVisualizer(visualizer);

@@ -20,10 +20,10 @@ public class LineDrawing extends Drawing{
 
     public LineDrawing(Drawing anotherDrawing,int minLineWidth,Color color){
         super(anotherDrawing);
-        this.slope = LineSlope.POSITIVE;
-        this.color = color;
-        this.minLineWidth = minLineWidth;
-        this.stroke = new BasicStroke(minLineWidth);
+        this.setSlope(LineSlope.POSITIVE);
+        this.setColor(color);
+        this.setMinLineWidth(minLineWidth);
+        this.setStroke(new BasicStroke(minLineWidth));
     }
     public LineDrawing(int minLineWidth,Color color){
         this(null,minLineWidth,color);
@@ -38,14 +38,14 @@ public class LineDrawing extends Drawing{
 //        this.height = height;
 //    }
     public void setFields(LineSlope slope,Dimension dimension){
-        this.slope = slope;
-        this.dimension = dimension;
-        if(getAnotherDrawing() instanceof LineDrawing lineDrawing){
+        this.setSlope(slope);
+        this.setDimension(dimension);
+        if(getWrappedDrawing() instanceof LineDrawing lineDrawing){
             lineDrawing.setFields(this);
         }
     }
     public void setFields(LineDrawing lineDrawing){
-        setFields(lineDrawing.slope,lineDrawing.dimension);
+        setFields(lineDrawing.getSlope(), lineDrawing.getDimension());
     }
     @Override
     public void draw(Graphics g) {
@@ -82,7 +82,7 @@ public class LineDrawing extends Drawing{
         width = (int)getDrawingDimension().getWidth();
         height = (int)getDrawingDimension().getHeight();
         Graphics2D g2d = (Graphics2D) g;
-        switch (slope){
+        switch (getSlope()){
             case POSITIVE -> drawLine(0,height,width,0,g2d);
             case NEGATIVE -> drawLine(0,0,width,height,g2d);
             case VERTICAL -> drawLine(width/2,0,width/2,height,g2d);
@@ -90,12 +90,61 @@ public class LineDrawing extends Drawing{
         }
         super.draw(g);
     }
+
+    /**
+     * Draws a line with current color and brush stroke
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2
+     * @param g2d
+     */
     public void drawLine(int x1, int y1,int x2, int y2,Graphics2D g2d){
-        g2d.setColor(color);
-        g2d.setStroke(stroke);
+        g2d.setColor(getColor());
+        g2d.setStroke(getStroke());
         g2d.drawLine(x1,y1,x2,y2);
     }
     public Dimension getDrawingDimension(){
+        return getDimension();
+    }
+
+    public LineSlope getSlope() {
+        return slope;
+    }
+
+    public void setSlope(LineSlope slope) {
+        this.slope = slope;
+    }
+
+    public int getMinLineWidth() {
+        return minLineWidth;
+    }
+
+    public void setMinLineWidth(int minLineWidth) {
+        this.minLineWidth = minLineWidth;
+    }
+
+    public Dimension getDimension() {
         return dimension;
+    }
+
+    public void setDimension(Dimension dimension) {
+        this.dimension = dimension;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
+    public Stroke getStroke() {
+        return stroke;
+    }
+
+    public void setStroke(Stroke stroke) {
+        this.stroke = stroke;
     }
 }
