@@ -16,6 +16,8 @@ public abstract class RunnableEntity extends Entity implements Runnable{
     private volatile CartesianObject destination;
 
     private boolean forcedToGo;
+
+    private boolean removed = false;
     private static float LENGTHTODEST = 10f;
     private static float SPEEDFALLOFF = 20f;
 
@@ -91,6 +93,8 @@ public abstract class RunnableEntity extends Entity implements Runnable{
     }
     public void updatePosition(){
         CartesianObject newPos = new CartesianObject();
+        newPos.set(this);
+        newPos.add(getVelocity());
         getMap().velocityOutOfBounds(newPos,getVelocity());
         add(getVelocity());
     }
@@ -108,7 +112,7 @@ public abstract class RunnableEntity extends Entity implements Runnable{
         }
         float speed = getSpeed();
         if(lengthToDestination() < SPEEDFALLOFF){
-            speed *= lengthToDestination()/SPEEDFALLOFF;
+            speed *= (lengthToDestination()+0.1)/SPEEDFALLOFF;
         }
         difference.normalizeTo(speed);
         getVelocity().set(difference);
@@ -203,5 +207,13 @@ public abstract class RunnableEntity extends Entity implements Runnable{
 
     public void setForcedToGo(boolean forcedToGo) {
         this.forcedToGo = forcedToGo;
+    }
+
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    public void setRemoved(boolean removed) {
+        this.removed = removed;
     }
 }

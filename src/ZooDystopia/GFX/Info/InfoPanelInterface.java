@@ -9,4 +9,6 @@ public interface InfoPanelInterface {
     //public void displayInfo(LocalisedSprite localisedSprite);
 
     public void setSelectedSprite(BasicSprite sprite);
+
+    public BasicSprite getSelectedSprite();
 }

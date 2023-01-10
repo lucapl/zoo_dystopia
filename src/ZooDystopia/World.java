@@ -134,9 +134,14 @@ public class World {
         return corpseFilter.filter(getEntities());
     }
     public void entityDies(RunnableEntity entity){
-        getMapPanel().remove(visualizer.popSprite(entity));
+        remove(entity);
         EntityController corpseController = new EntityController(new CorpseFactory(entity));
         corpseController.addRandomAt(entity,this);
+    }
+
+    public void remove(Entity entity){
+        getMapPanel().remove(visualizer.popSprite(entity));
+        getEntities().remove(entity);
     }
 
     public synchronized List<Entity> getEntities() {
@@ -205,10 +210,10 @@ public class World {
     }
 
     public void velocityOutOfBounds(CartesianObject newPos,Vector2D velocity){
-        if(newPos.getX() > getWIDTH()){
+        if(newPos.getX() > getWIDTH() || newPos.getX() < 0){
             velocity.flipX();
         }
-        if(newPos.getY() > getHEIGHT()){
+        if(newPos.getY() > getHEIGHT() || newPos.getY() < 0){
             velocity.flipY();
         }
     }

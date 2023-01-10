@@ -72,11 +72,11 @@ public abstract class Structure extends CartesianObject {
         this.paths = paths;
     }
 
-    public List<Entity> getEntitiesAt() {
+    public synchronized List<Entity> getEntitiesAt() {
         return entitiesAt;
     }
 
-    public void setEntitiesAt(List<Entity> entitiesAt) {
+    public synchronized void setEntitiesAt(List<Entity> entitiesAt) {
         this.entitiesAt = entitiesAt;
     }
 

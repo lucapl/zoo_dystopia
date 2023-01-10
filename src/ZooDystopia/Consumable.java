@@ -1,6 +1,8 @@
 package ZooDystopia;
 
 public interface Consumable {
-    static boolean consumable = true;
+    /**
+     * @return the worth of the consumable
+     */
     public float getFoodValue();
 }

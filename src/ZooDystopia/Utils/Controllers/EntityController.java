@@ -2,9 +2,11 @@ package ZooDystopia.Utils.Controllers;
 
 import ZooDystopia.CartesianObject;
 import ZooDystopia.Entities.Entity;
+import ZooDystopia.Entities.Prey;
 import ZooDystopia.Entities.RunnableEntity;
 import ZooDystopia.GFX.Sprites.BasicSprite;
 import ZooDystopia.GFX.ZOrders;
+import ZooDystopia.Pathing.Route;
 import ZooDystopia.Utils.Daemon;
 import ZooDystopia.Utils.Factories.EntityFactory;
 import ZooDystopia.World;
@@ -53,12 +55,14 @@ public class EntityController{
     }
 
     /**
-     * Allows the user to input where the entity should go
-     * @param runnableEntity chosen entity
-     * @param point coordinates of destination
+     * Allows the user to input where the prey should go
+     * @param prey chosen prey
+     * @param route to what structure type it should go
      */
-    public void forceEntityToGoTo(RunnableEntity runnableEntity, CartesianObject point){
-        return;
+    public void forcePreyToGoTo(Prey prey, Route route){
+        prey.finishStuff();
+        prey.setForcedToGo(true);
+        prey.setGoesTo(route);
     }
 
     public EntityFactory getEntityFactory() {

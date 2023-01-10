@@ -65,24 +65,7 @@ public class ZooDystopia {
      */
     public void defineButtonsFunctions(){
         ControlPanel controlPanel = (ControlPanel) getInfoFrame().getMainPanel();
-        controlPanel.addPredatorButtonAction(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                EntityController predatorController = new EntityController(new PredatorFactory());
-                predatorController.addRandom(getMap());
-            }
-
-        });
-
-        controlPanel.addPreyButtonAction(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                EntityController preyController = new EntityController(new PreyFactory());
-                ControlPanel controlPanel1 = (ControlPanel)(infoFrame.getMainPanel());
-                preyController.addRandomAt((CartesianObject) controlPanel1.getSelectedSprite().getRepresentedObject(),getMap());
-            }
-
-        });
+        controlPanel.addButtonFunctionality(getMap());
     }
 
     /**

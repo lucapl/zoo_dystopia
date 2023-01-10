@@ -71,7 +71,7 @@ public class Predator extends RunnableEntity {
     public void run(){
         setVelocityToNormal();
         //the life loop
-        while(isAlive()){
+        while(isAlive()||!isRemoved()){
             forcedGo();
             sleep();
             updatePosition();
@@ -80,6 +80,9 @@ public class Predator extends RunnableEntity {
                 case RELAX -> relaxedSteps();
                 case HUNTING -> huntingSteps();
             }
+        }
+        if(!isRemoved()) {
+            die();
         }
     }
     public void relaxedSteps(){

@@ -24,9 +24,7 @@ public class InfoPanel extends BasicPanel implements InfoPanelInterface {
         setVisible(true);
         Timer timer = new Timer(50, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if(getSelectedSprite() !=null) {
-                    displayInfo();
-                }
+                displayInfo();
             }
         });
         timer.start();
@@ -65,11 +63,19 @@ public class InfoPanel extends BasicPanel implements InfoPanelInterface {
     public void displayInfo(){
         if(getSelectedSprite() != null) {
             displayInfo(getSelectedSprite());
+        }else{
+            removeAll();
+            revalidate();
+            repaint();
         }
     }
 
     public void setSelectedSprite(BasicSprite s){
         this.selectedSprite = s;
+        if(s == null){
+            setVisibilityFlag(null);
+            return;
+        }
         Object o = s.getRepresentedObject();
         if (o instanceof Entity){
             setVisibilityFlag(VisibilityFlag.ENTITY);

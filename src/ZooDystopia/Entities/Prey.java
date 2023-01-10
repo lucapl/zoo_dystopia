@@ -26,6 +26,8 @@ public class Prey extends RunnableEntity {
 
     private Structure currentStructure;
 
+    private static float structureEntryRange = 50;
+
     public Meter getThirst() {
         return thirst;
     }
@@ -40,7 +42,7 @@ public class Prey extends RunnableEntity {
         super(name, species, strength, speed);
         thirst = new Meter("Thirst",0,50,30,0.3f);
         hunger = new Meter("Hunger",0,50,20,0.2f);
-        setSleepiness(new Meter("Sleepiness", 100, 100, 80, 0.1f));
+        setSleepiness(new Meter("Sleepiness", 0, 100, 80, 0.1f));
     }
     /**
      * Proceed to hide at a hideout
@@ -48,6 +50,10 @@ public class Prey extends RunnableEntity {
      */
     public void hideAt(Hideout hideout){
         return;
+    }
+
+    public boolean isInThreadEntryRange(Structure structure){
+        return lengthTo(structure) < structureEntryRange;
     }
 
     public String toString(){
@@ -88,26 +94,37 @@ public class Prey extends RunnableEntity {
             setDeathReason("Brain eating amoeba");
         }
         pickClosest();
-        while(isAlive()){
-            forcedGo();
+        while(isAlive() && !isRemoved()){
             sleep();
             updatePosition();
 
-            if(getCurrentStructure() instanceof Routable businessPlace && businessPlace.getRoute() == getGoesTo()){
+            if(isAtDestination()&&getCurrentStructure() instanceof Routable businessPlace && businessPlace.getRoute() == getGoesTo()){
                 doStuffAt(businessPlace);
             }
 
             walk();
 
-            if (!isWaiting()) {
-                getHunger().update();
-                getThirst().update();
-                getSleepiness().update();
-            }
+            getHunger().update();
+            getThirst().update();
+            getSleepiness().update();
+            checkNeeds();
         }
-        die();
+        if(!isRemoved()) {
+            die();
+        }
+    }
+    public void checkNeeds(){
+        if(isThirsty()){
+            getHealth().update(-0.05f);
+        }
+        if(isHungry()){
+            getHealth().update(-0.1f);
+        }
     }
     public void setDesiredRoute(){
+        if(isForcedToGo()){
+            return;
+        }
         setGoesTo(null);
         if(isThirsty()){
             setGoesTo(Route.ToWaterSource);
@@ -121,6 +138,7 @@ public class Prey extends RunnableEntity {
     }
     public void doStuffAt(Routable routable){
         setWalking(false);
+        interpolateEntry(currentStructure);
         switch(routable.getRoute()){
             case ToPlants, ToWaterSource -> consume((Consumable) routable);
             case ToHideout -> hide((Hideout)routable);
@@ -130,16 +148,23 @@ public class Prey extends RunnableEntity {
         setWalking(true);
         setConsuming(false);
         setHidden(false);
+        setForcedToGo(false);
     }
     public void walk(){
         if(isWalking()) {
             setDesiredRoute();
             updateVelocity();
-            if (isAtStructure()) {
+            if (isAtStructure() && isAtDestination()) {
+                interpolateLeave();
+            }
+            if(isInThreadEntryRange((Structure) getDestination()) && !isAtStructure()){
+                enter((Structure) getDestination());
+            }
+            if(isAtStructure()&&!isInThreadEntryRange(currentStructure)){
                 leave();
             }
             if (isAtDestination()) {
-                enter((Structure) getDestination());
+                interpolateEntry((Structure) getDestination());
             }
         }
     }
@@ -257,24 +282,28 @@ public class Prey extends RunnableEntity {
         return currentStructure != null;
     }
 
+    public void interpolateEntry(Structure structure){
+        set(structure);
+        setVelocity(0,0);
+    }
     public void enter(Structure structure){
         try {
             structure.getSemaphore().acquire();
-            set(structure);
             setCurrentStructure(structure);
             structure.add(this);
-            setVelocity(0,0);
         }catch (InterruptedException e){
             e.printStackTrace();
             System.err.println("Thread interrupted");
             structure.getSemaphore().release();
         }
     }
-    public void leave(){
+    public void interpolateLeave(){
         setVelocity(0,0);
-        getCurrentStructure().remove(this);
-        getCurrentStructure().getSemaphore().release();
         pickDestination();
+    }
+    public void leave(){
+        getCurrentStructure().getSemaphore().release();
+        getCurrentStructure().remove(this);
         setCurrentStructure(null);
     }
 
